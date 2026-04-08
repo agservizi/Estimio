@@ -1,0 +1,30 @@
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── Build output ─────────────────────────────────────────────────────────────
+dist/
+dist-ssr/
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ─── Environment – credenziali locali (MAI committare) ────────────────────────
+# Vite carica automaticamente i file *.local e li esclude dal controllo versione.
+*.local
+# Proteggi anche .env che potrebbe contenere chiavi reali
+.env
+
+# ─── TypeScript / IDE ─────────────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ─── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+*.pem
+
+# ─── Editor ───────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
