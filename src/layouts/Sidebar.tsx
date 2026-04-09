@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, PlusCircle, Search, BarChart3, Building2, Users, Calendar,
   FileText, Heart, Settings, ChevronLeft, ChevronRight, X, TrendingUp,
-  Building,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/ui.store'
@@ -110,13 +109,11 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className={cn('flex items-center gap-3 px-4 py-5 border-b border-white/10', collapsed && 'justify-center px-2')}>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-600">
-          <Building className="h-4 w-4 text-white" />
-        </div>
+        <img src="/logo.png" alt="SubitoStima" className="h-8 w-8 shrink-0 rounded-full object-contain" />
         {!collapsed && (
           <div>
-            <p className="text-sm font-bold text-white tracking-tight">Estimio</p>
-            <p className="text-[10px] text-slate-400 font-medium">Valutazioni Pro</p>
+            <p className="text-sm font-bold text-white tracking-tight">SubitoStima</p>
+            <p className="text-[10px] text-slate-400 font-medium">Valutazione Istantanea</p>
           </div>
         )}
       </div>
@@ -154,7 +151,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-700 text-white text-xs font-bold">
+                <div className={cn('flex h-8 w-8 items-center justify-center rounded-full text-white text-xs font-bold', profile.avatar_color ?? 'bg-brand-600')}>
                   {initials(profile.full_name)}
                 </div>
               </TooltipTrigger>
@@ -162,7 +159,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             </Tooltip>
           ) : (
             <div className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-white/8 transition-colors cursor-pointer">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-700 text-white text-xs font-bold">
+              <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs font-bold', profile.avatar_color ?? 'bg-brand-600')}>
                 {initials(profile.full_name)}
               </div>
               <div className="flex-1 min-w-0">

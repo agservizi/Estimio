@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Building, ArrowRight, Shield, TrendingUp, BarChart2, Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, Shield, TrendingUp, BarChart2, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -56,12 +56,10 @@ export function LoginPage() {
         {/* Logo */}
         <div className="w-full mb-10">
           <div className="flex items-center gap-3 mb-8">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600">
-              <Building className="h-5 w-5 text-white" />
-            </div>
+            <img src="/logo.png" alt="SubitoStima" className="h-10 w-10 rounded-full object-contain" />
             <div>
-              <p className="text-lg font-bold text-foreground">Estimio</p>
-              <p className="text-xs text-muted-foreground">Valutazioni Immobiliari Pro</p>
+              <p className="text-lg font-bold text-foreground">SubitoStima</p>
+              <p className="text-xs text-muted-foreground">Valutazione Immobiliare Istantanea</p>
             </div>
           </div>
 

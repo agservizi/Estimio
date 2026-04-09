@@ -146,7 +146,7 @@ export function Topbar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="gap-2 px-2">
               <Avatar className="h-7 w-7">
-                <AvatarFallback className="text-[11px]">
+                <AvatarFallback className={cn('text-[11px] text-white', profile?.avatar_color ?? 'bg-brand-600')}>
                   {profile ? initials(profile.full_name) : 'U'}
                 </AvatarFallback>
               </Avatar>

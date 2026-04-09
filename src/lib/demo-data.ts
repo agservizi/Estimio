@@ -6,10 +6,14 @@ import type {
 export const DEMO_PROFILE: Profile = {
   id: 'demo-user-001',
   full_name: 'Marco Ferretti',
-  email: 'marco.ferretti@estimio.it',
+  email: 'marco.ferretti@subitostima.it',
   role: 'agent',
   agency_name: 'Ferretti Immobiliare',
   avatar_url: null,
+  avatar_color: 'bg-brand-600',
+  phone: '+39 06 1234567',
+  website: 'www.ferrettiimmobiliare.it',
+  bio: 'Agente immobiliare con 12 anni di esperienza nel mercato romano. Specializzato in residenziale premium e investimenti.',
   created_at: '2024-01-15T09:00:00Z',
 }
 

@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Building2, FilePlus2, FileDown, Archive, Trash2,
-  Copy, ChevronDown, Filter, AlertTriangle,
+  Copy, ChevronDown, Filter, AlertTriangle, Navigation, MapPin,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,8 +22,10 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfidenceScoreBadge } from '@/components/shared/ConfidenceScoreBadge'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { GeoZonePanel } from '@/components/shared/GeoZonePanel'
 import { formatCurrency, formatRelativeDate } from '@/lib/utils'
 import { useValuations, useUpdateValuation, useDeleteValuation, useCreateValuation } from '@/hooks/useValuations'
+import { useGeolocation, haversineKm } from '@/hooks/useGeolocation'
 import { exportValuationPDF } from '@/lib/pdf-export'
 import { useAuthStore } from '@/store/auth.store'
 import type { ValuationStatus } from '@/types'
@@ -33,11 +35,13 @@ export function ArchivioPage() {
   const { profile } = useAuthStore()
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<ValuationStatus | 'all'>('all')
+  const [geoFilterActive, setGeoFilterActive] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const { data: valuationsWithData = [] } = useValuations()
   const updateValuation = useUpdateValuation()
   const deleteValuation = useDeleteValuation()
   const createValuation = useCreateValuation()
+  const geo = useGeolocation()
 
   const filtered = useMemo(() => {
     let result = [...valuationsWithData]
@@ -52,8 +56,15 @@ export function ArchivioPage() {
           v.client?.last_name?.toLowerCase().includes(q)
       )
     }
+    // Filtro geo: mostra solo valutazioni nella città rilevata
+    if (geoFilterActive && geo.location?.city) {
+      const city = geo.location.city.toLowerCase()
+      result = result.filter(
+        (v) => v.property?.city?.toLowerCase() === city
+      )
+    }
     return result
-  }, [valuationsWithData, query, statusFilter])
+  }, [valuationsWithData, query, statusFilter, geoFilterActive, geo.location?.city])
 
   const stats = {
     total: valuationsWithData.length,
@@ -114,6 +125,40 @@ export function ArchivioPage() {
             <SelectItem value="archived">Archiviata</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Filtro per zona geografica */}
+        {geo.status === 'idle' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={geo.request}
+          >
+            <Navigation className="h-3.5 w-3.5" />
+            Zona attuale
+          </Button>
+        )}
+        {geo.status === 'requesting' && (
+          <Badge variant="slate" className="gap-1.5">
+            <Navigation className="h-3 w-3 animate-pulse" />
+            Rilevamento…
+          </Badge>
+        )}
+        {geo.status === 'granted' && geo.location && (
+          <button
+            className={`inline-flex items-center gap-1.5 rounded-full text-xs font-medium px-2.5 py-1 border transition-colors ${
+              geoFilterActive
+                ? 'bg-brand-100 border-brand-300 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'
+                : 'bg-muted border-border text-muted-foreground hover:text-foreground'
+            }`}
+            onClick={() => setGeoFilterActive((v) => !v)}
+          >
+            <MapPin className="h-3 w-3" />
+            {geo.location.city}
+            {geoFilterActive && <span className="ml-0.5">· attivo</span>}
+          </button>
+        )}
+
         <Badge variant="slate">{filtered.length} valutazioni</Badge>
       </div>
 

@@ -13,6 +13,7 @@ import { KPIStatCard } from '@/components/shared/KPIStatCard'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfidenceScoreBadge } from '@/components/shared/ConfidenceScoreBadge'
+import { GeoZonePanel } from '@/components/shared/GeoZonePanel'
 import { Badge } from '@/components/ui/badge'
 import {
   DEMO_KPI, DEMO_VALUATIONS, DEMO_PROPERTIES, DEMO_CLIENTS,
@@ -139,6 +140,9 @@ export function DashboardPage() {
           />
         </motion.div>
       </motion.div>
+
+      {/* Geo Zone Panel */}
+      <GeoZonePanel radiusKm={2} />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

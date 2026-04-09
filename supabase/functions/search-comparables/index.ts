@@ -99,6 +99,26 @@ function mapElement(el: Record<string, unknown>, contractType: string): Record<s
   }
 }
 
+// ─── Lookup Idealista location ID from a city name ───────────────────────────
+// Idealista search requires a specific location code, not a plain city name.
+// This resolves e.g. "Roma" → "0-EU-IT-RM-RM-0" via the locations endpoint.
+
+async function lookupLocationId(
+  city: string,
+  token: string,
+  country = 'it',
+): Promise<string | null> {
+  try {
+    const url = `https://api.idealista.com/3.5/${country}/locations?text=${encodeURIComponent(city)}&type=city`
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) return null
+    const data = await res.json() as { locationList?: Array<{ locationId: string; name: string }> }
+    return data.locationList?.[0]?.locationId ?? null
+  } catch {
+    return null
+  }
+}
+
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -138,6 +158,10 @@ serve(async (req) => {
     // Get OAuth token
     const token = await getIdealistaToken(apiKey, secret)
 
+    // Resolve city name → Idealista location ID
+    // The API requires a specific code; a plain city name would return no results.
+    const locationId = body.city ? await lookupLocationId(body.city, token, country) : null
+
     // Build Idealista search params
     const params = new URLSearchParams()
     params.set('operation', operation)
@@ -148,7 +172,12 @@ serve(async (req) => {
     params.set('order', 'relevance')
     params.set('sort', 'desc')
 
-    if (body.city) params.set('locationId', body.city)
+    if (locationId) {
+      params.set('locationId', locationId)
+    } else if (body.city) {
+      // Fallback: Idealista may accept free-text location in some versions
+      params.set('locationText', body.city)
+    }
     if (body.price_min) params.set('minPrice', String(body.price_min))
     if (body.price_max) params.set('maxPrice', String(body.price_max))
     if (body.area_min) params.set('minSize', String(body.area_min))

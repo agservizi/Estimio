@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (isLoading) => set({ isLoading }),
     }),
     {
-      name: 'estimio-auth',
+      name: 'subitostima-auth',
       partialize: (state) => ({
         profile: state.profile,
         isAuthenticated: state.isAuthenticated,

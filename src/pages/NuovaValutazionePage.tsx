@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   MapPin, Home, Ruler, Layers, ChevronRight, ChevronLeft,
-  Check, Search, Star, StarOff, Info, Zap,
+  Check, Search, Star, StarOff, Info, Zap, Building2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +22,7 @@ import { formatCurrency, formatArea, formatPricePerSqm, formatDistance } from '@
 import { useValuationStore } from '@/store/valuation.store'
 import { useCreateValuation } from '@/hooks/useValuations'
 import { useComparableSearch } from '@/hooks/useComparables'
+import { useZoneInsightsByCity } from '@/hooks/useZoneInsights'
 import { propertiesService } from '@/services/properties.service'
 import { useAuthStore } from '@/store/auth.store'
 import { cn } from '@/lib/utils'
@@ -427,13 +428,29 @@ function Step2Caratteristiche() {
 }
 
 function Step3Comparabili() {
-  const { draft, toggleComparable, setAllComparables } = useValuationStore()
+  const { draft, toggleComparable, setAllComparables, setOmiZone } = useValuationStore()
   const { selectedComparableIds } = draft
   const [localQuery, setLocalQuery] = useState('')
 
   const { data: comparables = [], isLoading } = useComparableSearch({
     city: draft.property.city || undefined,
   })
+
+  // Carica le zone OMI per la città dell'immobile e seleziona la zona più vicina
+  const { data: omiZones = [] } = useZoneInsightsByCity(draft.property.city ?? '')
+
+  useEffect(() => {
+    if (omiZones.length === 0) {
+      setOmiZone(null)
+      return
+    }
+    // Scegli la zona OMI che corrisponde alla zona inserita, o la prima disponibile
+    const propertyZone = (draft.property.zone ?? '').toLowerCase()
+    const match = propertyZone
+      ? omiZones.find((z) => z.zone.toLowerCase().includes(propertyZone) || propertyZone.includes(z.zone.toLowerCase()))
+      : null
+    setOmiZone(match ?? omiZones[0])
+  }, [omiZones, draft.property.zone, setOmiZone])
 
   // Sincronizza i comparabili nello store per il calcolo
   useEffect(() => {
@@ -448,6 +465,23 @@ function Step3Comparabili() {
 
   return (
     <div className="space-y-4">
+      {/* Banner zona OMI */}
+      {omiZones.length > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Building2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span className="text-emerald-800 font-medium">
+              Zona OMI rilevata:{' '}
+              <span className="font-bold">{omiZones[0].zone}</span>
+              {' · '}
+              {omiZones[0].avg_price_sqm.toLocaleString('it-IT')} €/m²
+              <span className="font-normal text-emerald-600 ml-1">media di mercato</span>
+            </span>
+          </div>
+          <Badge variant="emerald" className="text-[10px] shrink-0">OMI {omiZones[0].period_label}</Badge>
+        </div>
+      )}
+
       <div className="flex items-center gap-3">
         <Input
           startIcon={<Search className="h-4 w-4" />}

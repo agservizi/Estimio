@@ -41,8 +41,8 @@ export async function searchComparablesFromAPI(
     )
   }
   if (filters.source && filters.source !== 'idealista') {
-    // Se si richiede una fonte specifica diversa da Idealista, restituiamo vuoto —
-    // la sorgente alternativa andrà aggiunta con un'altra Edge Function
+    // Fonte specifica diversa da Idealista: non chiamiamo l'API, lasciamo
+    // che il chiamante cada nel fallback Supabase.
     return []
   }
 

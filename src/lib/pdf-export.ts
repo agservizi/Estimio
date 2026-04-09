@@ -11,7 +11,7 @@ interface ExportOptions {
 }
 
 function buildReportHTML(opts: ExportOptions): string {
-  const { valuation, property, client, comparables = [], agencyName = 'Estimio', agentName = '' } = opts
+  const { valuation, property, client, comparables = [], agencyName = 'SubitoStima', agentName = '' } = opts
 
   const formatV = (n: number | null | undefined) => (n ? formatCurrency(n) : '—')
 
@@ -228,7 +228,7 @@ function buildReportHTML(opts: ExportOptions): string {
 
 <!-- FOOTER -->
 <div class="footer">
-  ${agencyName} &nbsp;·&nbsp; Perizia n. ${valuation.id.slice(0, 8).toUpperCase()} &nbsp;·&nbsp; ${formatDate(valuation.created_at)} &nbsp;·&nbsp; Generato con Estimio Pro
+  ${agencyName} &nbsp;·&nbsp; Perizia n. ${valuation.id.slice(0, 8).toUpperCase()} &nbsp;·&nbsp; ${formatDate(valuation.created_at)} &nbsp;·&nbsp; Generato con SubitoStima Pro
 </div>
 
 </body>

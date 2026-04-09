@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Property, Comparable, ValuationResult } from '@/types'
+import type { Property, Comparable, ValuationResult, ZoneInsight } from '@/types'
 import { calculateValuation } from '@/lib/valuation-engine'
 
 interface ValuationDraft {
@@ -14,11 +14,13 @@ interface ValuationDraft {
 interface ValuationState {
   draft: ValuationDraft
   availableComparables: Comparable[]
+  omiZone: ZoneInsight | null
 
   setProperty: (updates: Partial<Property>) => void
   setStep: (step: number) => void
   toggleComparable: (id: string) => void
   setAllComparables: (comparables: Comparable[]) => void
+  setOmiZone: (zone: ZoneInsight | null) => void
   recalculate: () => void
   resetDraft: () => void
   setNotes: (notes: string) => void
@@ -49,6 +51,7 @@ export const useValuationStore = create<ValuationState>()(
     (set, get) => ({
       draft: DEFAULT_DRAFT,
       availableComparables: [],
+      omiZone: null,
 
       setProperty: (updates) =>
         set((state) => ({
@@ -76,13 +79,25 @@ export const useValuationStore = create<ValuationState>()(
 
       setAllComparables: (comparables) => set({ availableComparables: comparables }),
 
+      setOmiZone: (zone) => {
+        set({ omiZone: zone })
+        get().recalculate()
+      },
+
       recalculate: () => {
-        const { draft, availableComparables } = get()
+        const { draft, availableComparables, omiZone } = get()
         const selected = availableComparables.filter((c) =>
           draft.selectedComparableIds.includes(c.id)
         )
 
-        if (selected.length === 0 || !draft.property.commercial_area) {
+        // Consenti la stima anche senza comparabili se c'è il dato OMI
+        if (selected.length === 0 && !omiZone) {
+          set((state) => ({
+            draft: { ...state.draft, result: null },
+          }))
+          return
+        }
+        if (!draft.property.commercial_area) {
           set((state) => ({
             draft: { ...state.draft, result: null },
           }))
@@ -90,7 +105,7 @@ export const useValuationStore = create<ValuationState>()(
         }
 
         try {
-          const result = calculateValuation(draft.property as Property, selected)
+          const result = calculateValuation(draft.property as Property, selected, omiZone)
           set((state) => ({
             draft: { ...state.draft, result },
           }))
@@ -99,7 +114,7 @@ export const useValuationStore = create<ValuationState>()(
         }
       },
 
-      resetDraft: () => set({ draft: DEFAULT_DRAFT }),
+      resetDraft: () => set({ draft: DEFAULT_DRAFT, omiZone: null }),
 
       setNotes: (notes) =>
         set((state) => ({
@@ -107,7 +122,7 @@ export const useValuationStore = create<ValuationState>()(
         })),
     }),
     {
-      name: 'estimio-valuation-draft',
+      name: 'subitostima-valuation-draft',
       partialize: (state) => ({ draft: state.draft }),
     }
   )

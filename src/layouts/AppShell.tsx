@@ -7,8 +7,14 @@ import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { pageVariants } from '@/lib/motion'
 
+const DENSITY_PADDING: Record<string, string> = {
+  compact: 'p-4',
+  normal: 'p-6',
+  comfortable: 'p-8',
+}
+
 export function AppShell() {
-  const { theme } = useUIStore()
+  const { theme, language, density } = useUIStore()
   const location = useLocation()
 
   useEffect(() => {
@@ -21,6 +27,10 @@ export function AppShell() {
       root.classList.add(theme)
     }
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.lang = language
+  }, [language])
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -35,7 +45,7 @@ export function AppShell() {
               initial="initial"
               animate="animate"
               exit="exit"
-              className="p-6"
+              className={DENSITY_PADDING[density] ?? 'p-6'}
             >
               <Outlet />
             </motion.div>

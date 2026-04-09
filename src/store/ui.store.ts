@@ -2,11 +2,16 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Notification, ViewMode } from '@/types'
 
+export type AppLanguage = 'it' | 'en'
+export type AppDensity = 'compact' | 'normal' | 'comfortable'
+
 interface UIState {
   sidebarCollapsed: boolean
   sidebarMobileOpen: boolean
   commandPaletteOpen: boolean
   theme: 'light' | 'dark' | 'system'
+  language: AppLanguage
+  density: AppDensity
   comparablesViewMode: ViewMode
   notifications: Notification[]
   unreadCount: number
@@ -16,6 +21,8 @@ interface UIState {
   setSidebarMobileOpen: (open: boolean) => void
   setCommandPaletteOpen: (open: boolean) => void
   setTheme: (theme: 'light' | 'dark' | 'system') => void
+  setLanguage: (language: AppLanguage) => void
+  setDensity: (density: AppDensity) => void
   setComparablesViewMode: (mode: ViewMode) => void
   addNotification: (n: Omit<Notification, 'id' | 'read' | 'created_at'>) => void
   markAllRead: () => void
@@ -29,6 +36,8 @@ export const useUIStore = create<UIState>()(
       sidebarMobileOpen: false,
       commandPaletteOpen: false,
       theme: 'light',
+      language: 'it',
+      density: 'normal',
       comparablesViewMode: 'card',
       notifications: [
         {
@@ -63,6 +72,8 @@ export const useUIStore = create<UIState>()(
       setSidebarMobileOpen: (open) => set({ sidebarMobileOpen: open }),
       setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
       setTheme: (theme) => set({ theme }),
+      setLanguage: (language) => set({ language }),
+      setDensity: (density) => set({ density }),
       setComparablesViewMode: (mode) => set({ comparablesViewMode: mode }),
 
       addNotification: (n) =>
@@ -88,10 +99,12 @@ export const useUIStore = create<UIState>()(
       clearNotifications: () => set({ notifications: [], unreadCount: 0 }),
     }),
     {
-      name: 'estimio-ui',
+      name: 'subitostima-ui',
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
         theme: state.theme,
+        language: state.language,
+        density: state.density,
         comparablesViewMode: state.comparablesViewMode,
       }),
     }

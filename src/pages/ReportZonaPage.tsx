@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   TrendingUp, TrendingDown, MapPin, BarChart3, Download,
-  ArrowUpRight, Building2, Home,
+  ArrowUpRight, Building2, Home, Navigation,
 } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, Tooltip,
@@ -19,6 +19,8 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { DEMO_PRICE_TREND } from '@/lib/demo-data'
 import { formatCurrency, formatPricePerSqm, formatPercent, cn } from '@/lib/utils'
 import { useZoneInsightsByCity } from '@/hooks/useZoneInsights'
+import { useGeolocation } from '@/hooks/useGeolocation'
+import { GeoZonePanel } from '@/components/shared/GeoZonePanel'
 import type { ZoneInsight } from '@/types'
 
 const ZONE_COLORS: Record<string, string> = {
@@ -109,6 +111,18 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 export function ReportZonaPage() {
   const [selectedCity, setSelectedCity] = useState('Roma')
   const [selectedZone, setSelectedZone] = useState<string>('all')
+  const [geoUsed, setGeoUsed] = useState(false)
+
+  const geo = useGeolocation()
+
+  // Auto-seleziona la città rilevata dalla geolocalizzazione
+  useEffect(() => {
+    if (geo.status === 'granted' && geo.location?.city && !geoUsed) {
+      setSelectedCity(geo.location.city)
+      setSelectedZone('all')
+      setGeoUsed(true)
+    }
+  }, [geo.status, geo.location?.city, geoUsed])
 
   const { data: zoneInsights = [], isLoading } = useZoneInsightsByCity(selectedCity)
 
@@ -138,7 +152,7 @@ export function ReportZonaPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={selectedCity} onValueChange={setSelectedCity}>
+        <Select value={selectedCity} onValueChange={(v) => { setSelectedCity(v); setSelectedZone('all') }}>
           <SelectTrigger className="w-40">
             <MapPin className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue />
@@ -148,6 +162,9 @@ export function ReportZonaPage() {
             <SelectItem value="Milano">Milano</SelectItem>
             <SelectItem value="Napoli">Napoli</SelectItem>
             <SelectItem value="Torino">Torino</SelectItem>
+            <SelectItem value="Firenze">Firenze</SelectItem>
+            <SelectItem value="Bologna">Bologna</SelectItem>
+            <SelectItem value="Verona">Verona</SelectItem>
           </SelectContent>
         </Select>
 
@@ -162,6 +179,28 @@ export function ReportZonaPage() {
             ))}
           </SelectContent>
         </Select>
+
+        {/* Pulsante geolocalizzazione */}
+        {geo.status === 'idle' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={geo.request}
+          >
+            <Navigation className="h-3.5 w-3.5" />
+            Rileva posizione
+          </Button>
+        )}
+        {geo.status === 'requesting' && (
+          <Badge variant="slate" className="gap-1.5">
+            <Navigation className="h-3 w-3 animate-pulse" />
+            Rilevamento…
+          </Badge>
+        )}
+        {geo.status === 'granted' && geo.location && (
+          <GeoZonePanel compact className="ml-1" />
+        )}
 
         <Badge variant="slate">{filteredInsights.length} zone analizzate</Badge>
       </div>

@@ -17,6 +17,7 @@ const VisitePage = lazy(() => import('@/pages/VisitePage').then((m) => ({ defaul
 const ReportPage = lazy(() => import('@/pages/ReportPage').then((m) => ({ default: m.ReportPage })))
 const PreferitiPage = lazy(() => import('@/pages/PreferitiPage').then((m) => ({ default: m.PreferitiPage })))
 const ImpostazioniPage = lazy(() => import('@/pages/ImpostazioniPage').then((m) => ({ default: m.ImpostazioniPage })))
+const ProfiloPage = lazy(() => import('@/pages/ProfiloPage').then((m) => ({ default: m.ProfiloPage })))
 
 function PageLoader() {
   return (
@@ -35,15 +36,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
   if (!isAuthenticated) return <Navigate to="/login" replace />
   return <>{children}</>
-}
-
-function ProfiloPage() {
-  return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Profilo Utente</h1>
-      <p className="text-sm text-muted-foreground">Gestione profilo e piano abbonamento</p>
-    </div>
-  )
 }
 
 export default function App() {

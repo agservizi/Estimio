@@ -1,4 +1,4 @@
-import type { Comparable, Property, ValuationResult } from '@/types'
+import type { Comparable, Property, ValuationResult, ZoneInsight } from '@/types'
 
 // ─── Correction Coefficients ──────────────────────────────────────────────────
 
@@ -84,16 +84,50 @@ function getPropertyCorrectionFactor(property: Property): number {
 }
 
 // ─── Main Calculation ─────────────────────────────────────────────────────────
+//
+// omiZone: zona OMI corrispondente all'immobile (opzionale).
+//   - Se i comparabili sono assenti, l'OMI diventa l'unica base di stima.
+//   - Se i comparabili sono pochi (<3), l'OMI viene blended come ancora di
+//     mercato istituzionale per ridurre la volatilità della stima.
 
 export function calculateValuation(
   property: Property,
-  selectedComparables: Comparable[]
+  selectedComparables: Comparable[],
+  omiZone?: ZoneInsight | null
 ): ValuationResult {
+  const correctionFactor = getPropertyCorrectionFactor(property)
+
+  // ── Caso: nessun comparabile, solo dato OMI ──────────────────────────────
   if (selectedComparables.length === 0) {
-    throw new Error('Almeno un comparabile richiesto')
+    if (!omiZone) {
+      throw new Error('Almeno un comparabile richiesto')
+    }
+
+    const basePricePerSqm = omiZone.avg_price_sqm
+    const correctedPricePerSqm = basePricePerSqm * correctionFactor
+    const estimated_avg = Math.round(correctedPricePerSqm * property.commercial_area)
+    const spread = 0.15  // spread più ampio: solo dati OMI, nessun comparabile
+    const notes: string[] = [
+      `Stima basata esclusivamente sui dati OMI zona "${omiZone.zone}" (nessun comparabile selezionato).`,
+      `Quotazione OMI di riferimento: ${omiZone.min_price_sqm.toLocaleString('it-IT')}–${omiZone.max_price_sqm.toLocaleString('it-IT')} €/m² (${omiZone.period_label}).`,
+      'Selezionare comparabili di mercato per aumentare la precisione della stima.',
+    ]
+    if (property.condition === 'da_ristrutturare') {
+      notes.push('Lo stato da ristrutturare ha ridotto il valore stimato del ~20%.')
+    }
+    return {
+      estimated_min: Math.round(estimated_avg * (1 - spread)),
+      estimated_avg,
+      estimated_max: Math.round(estimated_avg * (1 + spread)),
+      suggested_listing_price: Math.round(estimated_avg * 1.03),
+      confidence_score: 0.45,
+      price_per_sqm: Math.round(correctedPricePerSqm),
+      comparables_used: 0,
+      notes,
+    }
   }
 
-  // Weighted average of price per sqm
+  // ── Calcolo ponderato sui comparabili ────────────────────────────────────
   let weightedSum = 0
   let totalWeight = 0
 
@@ -103,10 +137,20 @@ export function calculateValuation(
     totalWeight += weight
   }
 
-  const basePricePerSqm = weightedSum / totalWeight
+  let basePricePerSqm = weightedSum / totalWeight
+
+  // ── Blending con OMI quando i comparabili sono pochi (<3) ────────────────
+  // L'OMI viene usato come ancora istituzionale con peso 30%
+  // per stabilizzare la stima su dataset esigui.
+  let omiBlended = false
+  if (omiZone && selectedComparables.length < 3) {
+    const omiWeight = 0.30
+    basePricePerSqm = basePricePerSqm * (1 - omiWeight) + omiZone.avg_price_sqm * omiWeight
+    omiBlended = true
+  }
 
   // Apply property-specific correction
-  const correctedPricePerSqm = basePricePerSqm * getPropertyCorrectionFactor(property)
+  const correctedPricePerSqm = basePricePerSqm * correctionFactor
 
   // Estimated average
   const estimated_avg = Math.round(correctedPricePerSqm * property.commercial_area)
@@ -130,7 +174,16 @@ export function calculateValuation(
   // Generate notes
   const notes: string[] = []
   notes.push(`Stima basata su ${selectedComparables.length} comparabili selezionati.`)
-  notes.push(`Prezzo medio al m² comparabili: ${Math.round(basePricePerSqm).toLocaleString('it-IT')} €/m².`)
+  notes.push(`Prezzo medio al m² comparabili: ${Math.round(weightedSum / totalWeight).toLocaleString('it-IT')} €/m².`)
+  if (omiBlended && omiZone) {
+    notes.push(`Dato OMI zona "${omiZone.zone}" (${omiZone.avg_price_sqm.toLocaleString('it-IT')} €/m²) blended al 30% per stabilizzare la stima su pochi comparabili.`)
+  }
+  if (omiZone && !omiBlended) {
+    const deviation = Math.abs(basePricePerSqm - omiZone.avg_price_sqm) / omiZone.avg_price_sqm
+    if (deviation > 0.20) {
+      notes.push(`Attenzione: il prezzo stimato si discosta >20% dalla media OMI di zona (${omiZone.avg_price_sqm.toLocaleString('it-IT')} €/m²). Verificare la qualità dei comparabili.`)
+    }
+  }
   if (property.condition === 'da_ristrutturare') {
     notes.push('Lo stato da ristrutturare ha ridotto il valore stimato del ~20%.')
   }

@@ -9,6 +9,10 @@ export interface Profile {
   role: UserRole
   agency_name: string | null
   avatar_url: string | null
+  avatar_color: string | null
+  phone: string | null
+  website: string | null
+  bio: string | null
   created_at: string
 }
 
