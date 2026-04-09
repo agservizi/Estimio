@@ -45,10 +45,10 @@ const NOTIFICATION_PREFS = [
 ]
 
 const PORTALS = [
-  { id: 'idealista', name: 'Idealista', color: 'bg-orange-500', connected: true, listings: 142 },
-  { id: 'immobiliare', name: 'Immobiliare.it', color: 'bg-blue-600', connected: true, listings: 98 },
-  { id: 'casa', name: 'Casa.it', color: 'bg-green-600', connected: false, listings: 0 },
-  { id: 'wikicasa', name: 'Wikicasa', color: 'bg-purple-600', connected: false, listings: 0 },
+  { id: 'idealista', name: 'Idealista', color: 'bg-orange-500', connected: true, listings: 142, method: 'API ufficiale' },
+  { id: 'immobiliare', name: 'Immobiliare.it', color: 'bg-blue-600', connected: true, listings: 98, method: 'API ufficiale' },
+  { id: 'casa', name: 'Casa.it', color: 'bg-green-600', connected: false, listings: 0, method: 'Non disponibile' },
+  { id: 'wikicasa', name: 'Wikicasa', color: 'bg-purple-600', connected: true, listings: 0, method: 'Scraper' },
 ]
 
 const SESSIONS = [
@@ -498,9 +498,22 @@ export function ImpostazioniPage() {
                           {portal.name.slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{portal.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium">{portal.name}</p>
+                            {portal.method === 'Scraper' && (
+                              <Badge variant="outline" className="text-xs py-0 h-4 text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+                                Scraper
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-muted-foreground">
-                            {portal.connected ? `${portal.listings} annunci sincronizzati` : 'Non connesso'}
+                            {portal.connected
+                              ? portal.listings > 0
+                                ? `${portal.listings} annunci sincronizzati · ${portal.method}`
+                                : `Attivo via ${portal.method}`
+                              : portal.method === 'Non disponibile'
+                              ? 'API non disponibile'
+                              : 'Non connesso'}
                           </p>
                         </div>
                       </div>
@@ -513,13 +526,15 @@ export function ImpostazioniPage() {
                               <XCircle className="h-3 w-3" />Non connesso
                             </Badge>
                         }
-                        <Button
-                          variant={portal.connected ? 'outline' : 'default'}
-                          size="sm"
-                          onClick={() => togglePortal(portal.id)}
-                        >
-                          {portal.connected ? 'Disconnetti' : 'Connetti'}
-                        </Button>
+                        {portal.method !== 'Non disponibile' && (
+                          <Button
+                            variant={portal.connected ? 'outline' : 'default'}
+                            size="sm"
+                            onClick={() => togglePortal(portal.id)}
+                          >
+                            {portal.connected ? 'Disattiva' : 'Attiva'}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
