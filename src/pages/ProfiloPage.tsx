@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   Settings, Building2, Mail, Shield, Calendar, Users, ClipboardList,
   FileText, Star, TrendingUp, TrendingDown, Phone, Globe, Award,
-  MapPin, Home, ChevronRight, CheckCircle2, XCircle, BarChart2, Zap,
+  MapPin, Home, ChevronRight, CheckCircle2, XCircle, BarChart2, Zap, LucideIcon,
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -191,10 +191,10 @@ export function ProfiloPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                profile.phone && { icon: Phone, label: profile.phone },
-                profile.website && { icon: Globe, label: profile.website },
+                profile.phone ? { icon: Phone, label: profile.phone } : null,
+                profile.website ? { icon: Globe, label: profile.website } : null,
                 { icon: MapPin, label: 'Roma, RM' },
-              ].filter(Boolean).map(({ icon: Icon, label }) => (
+              ].filter((item): item is { icon: LucideIcon; label: string } => Boolean(item)).map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-2.5 text-sm">
                   <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span>{label}</span>

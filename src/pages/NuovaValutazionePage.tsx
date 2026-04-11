@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -431,10 +431,17 @@ function Step3Comparabili() {
   const { draft, toggleComparable, setAllComparables, setOmiZone } = useValuationStore()
   const { selectedComparableIds } = draft
   const [localQuery, setLocalQuery] = useState('')
+  const [filterSource, setFilterSource] = useState<string>('all')
 
-  const { data: comparables = [], isLoading } = useComparableSearch({
-    city: draft.property.city || undefined,
-  })
+  const isWikicasa = filterSource === 'wikicasa'
+
+  const searchFilters = useMemo(() =>
+    isWikicasa
+      ? { city: draft.property.city || 'roma', source: 'wikicasa' as const }
+      : { city: draft.property.city || undefined, source: filterSource !== 'all' ? filterSource as import('@/types').ComparableSource : undefined }
+  , [isWikicasa, draft.property.city, filterSource])
+
+  const { data: comparables = [], isLoading } = useComparableSearch(searchFilters)
 
   // Carica le zone OMI per la città dell'immobile e seleziona la zona più vicina
   const { data: omiZones = [] } = useZoneInsightsByCity(draft.property.city ?? '')
@@ -482,16 +489,38 @@ function Step3Comparabili() {
         </div>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Input
           startIcon={<Search className="h-4 w-4" />}
-          placeholder="Filtra comparabili per indirizzo o zona..."
-          className="max-w-sm"
+          placeholder="Filtra per indirizzo o zona..."
+          className="flex-1 min-w-[180px] max-w-sm"
           value={localQuery}
           onChange={(e) => setLocalQuery(e.target.value)}
         />
+        <Select value={filterSource} onValueChange={setFilterSource}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Fonte" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Demo data</SelectItem>
+            <SelectItem value="wikicasa">Wikicasa</SelectItem>
+            <SelectItem value="idealista">Idealista</SelectItem>
+          </SelectContent>
+        </Select>
         <Badge variant="slate">{isLoading ? '…' : `${filtered.length} trovati`}</Badge>
       </div>
+
+      {/* Banner Wikicasa */}
+      {isWikicasa && draft.property.city && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-2.5 flex items-center gap-2 text-sm">
+          <Search className="h-4 w-4 text-amber-600 shrink-0" />
+          <span className="text-amber-800">
+            {isLoading
+              ? <>Scraping Wikicasa in corso per <strong>{draft.property.city}</strong>…</>
+              : <>Dati reali da <strong>wikicasa.it</strong> · città: <strong>{draft.property.city}</strong></>}
+          </span>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">

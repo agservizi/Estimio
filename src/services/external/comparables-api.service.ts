@@ -2,8 +2,9 @@
 // Le Edge Functions gestiscono l'autenticazione verso Idealista e OMI
 // così le credenziali non sono mai esposte nel bundle del browser.
 
-import { supabase } from '@/lib/supabase'
+import { supabase, isDemoMode } from '@/lib/supabase'
 import type { Comparable, ComparableFilters, ZoneInsight } from '@/types'
+import { DEMO_WIKICASA_COMPARABLES } from '@/lib/demo-data'
 
 // ─── Idealista via Edge Function ─────────────────────────────────────────────
 
@@ -61,6 +62,47 @@ export async function searchComparablesFromAPI(
 export async function scrapeWikicasaComparables(
   filters: ComparableFilters
 ): Promise<Comparable[]> {
+  // In dev chiama il middleware Vite locale (/api/scrape-wikicasa),
+  // in prod chiama la Supabase Edge Function.
+  if (isDemoMode) {
+    try {
+      const res = await fetch('/api/scrape-wikicasa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: filters.city,
+          zone: filters.zone,
+          property_type: filters.property_type,
+          contract_type: 'vendita',
+          price_min: filters.price_min,
+          price_max: filters.price_max,
+          area_min: filters.area_min,
+          area_max: filters.area_max,
+          max_results: 30,
+        }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const result = await res.json() as { data: Comparable[]; total: number }
+      let results = result.data ?? []
+      if (filters.query) {
+        const q = filters.query.toLowerCase()
+        results = results.filter(
+          (c) => c.title.toLowerCase().includes(q) ||
+                 c.address.toLowerCase().includes(q) ||
+                 c.zone?.toLowerCase().includes(q)
+        )
+      }
+      return results
+    } catch (err) {
+      console.warn('[wikicasa dev] scraper non raggiungibile, uso mock:', err)
+      // Fallback ai mock statici se il plugin non è attivo
+      let results = [...DEMO_WIKICASA_COMPARABLES]
+      if (filters.city) results = results.filter((c) => c.city.toLowerCase().includes(filters.city!.toLowerCase()))
+      if (filters.zone) results = results.filter((c) => c.zone?.toLowerCase().includes(filters.zone!.toLowerCase()))
+      return results
+    }
+  }
+
   const { data, error } = await supabase.functions.invoke('scrape-wikicasa', {
     body: {
       city: filters.city,

@@ -1,10 +1,15 @@
 import { supabase, isDemoMode } from '@/lib/supabase'
 import { DEMO_COMPARABLES } from '@/lib/demo-data'
-import { searchComparablesFromAPI } from '@/services/external/comparables-api.service'
+import { searchComparablesFromAPI, scrapeWikicasaComparables } from '@/services/external/comparables-api.service'
 import type { Comparable, ComparableFilters } from '@/types'
 
 export const comparablesService = {
   async search(filters: ComparableFilters): Promise<Comparable[]> {
+    // ── Wikicasa scraper: disponibile sia in demo che in prod ─────────────────
+    if (filters.source === 'wikicasa') {
+      return scrapeWikicasaComparables(filters)
+    }
+
     // ── DEV: dati demo locali ─────────────────────────────────────────────────
     if (isDemoMode) {
       let results = [...DEMO_COMPARABLES]
